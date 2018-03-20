@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author Rodrigo Urrutia 16139
@@ -16,19 +17,18 @@ import java.util.ArrayList;
 public class Diccionario {
     
     ArrayList<Association<String,String>> asociaciones;
-    
+    ArrayList<String> texto;
     FileReader fr = null;
     BufferedReader br = null;
     BinaryTree<Association<String,String>> raiz;
     ArrayList <String> oracion = new ArrayList<>();
     
-    //Constructor de diccionario
     public Diccionario(){
         asociaciones= new ArrayList<>();
         raiz = new BinaryTree<>(null, null, null, null);
+        texto = new ArrayList<>();
     }
     
-    //Metodo que llena el dicionario con las palabras 
     public void llenarDiccionario() throws FileNotFoundException, IOException{
         ArrayList<String> palabras= new ArrayList<>();
 
@@ -51,6 +51,7 @@ public class Diccionario {
         }
         
         raiz.setValue(asociaciones.get(0));
+     
         for (int i=1; i<asociaciones.size(); i++){
             insertarNodo(raiz, asociaciones.get(i));     
         }
@@ -58,59 +59,32 @@ public class Diccionario {
     
     // llenar Diccionario inserta los nodos correspondientes al arbol 
     public void insertarNodo(BinaryTree<Association<String,String>> padre, Association<String,String> dato){
+        
         Association<String,String> asociacion=padre.value();
-        String llavePadre=asociacion.getKey().toLowerCase();
-        String llaveDato=dato.getKey().toLowerCase();
+        String llavePadre=asociacion.getKey();
+        String llaveDato=dato.getKey();
         //se insertan los datos comparandolos con cada padre
         int num=llavePadre.compareToIgnoreCase(llaveDato);
-        //llavePadre es menor que llaveDato
-
-        if (llavePadre.compareTo(llaveDato) < 0){
-            if(padre.left()==null)
-                padre.setLeft(new BinaryTree<>(null, null, null,null));
-                padre.left().setValue(dato);
-            }
-            else if(padre.left() != null){
-                insertarNodo(padre.left(),dato);
-            }
-        //llaveDato es menor que llavePadre
-        if(llavePadre.compareTo(llaveDato) > 0){
-            if(padre.right()==null){
-                padre.setRight(new BinaryTree<>(null, null, null,null));
-                padre.right().setValue(dato);
-            } 
-            else if(padre.right() != null){
-                insertarNodo(padre.right(),dato);
-            }
-        }
-        //llaveDato y llavePadre son iguales
-        /**if(llavePadre.compareTo(llaveDato) == 0){
-            if(padre.left() == null){
-                insertarNodo(padre.left(),dato);
-            }
-            else{
-                insertarNodo(padre.right(),dato);
-            }
-        }**/
         //Si el padre es mayor, se inserta a la izquierda
         
-        /**if(num>0 && padre.left()==null){
+        if(num>0 && padre.left()==null){
             padre.setLeft(new BinaryTree<>(null, null, null,null));
             padre.left().setValue(dato);
-        }else if(padre.left()!=null){
+        }
+        else if(padre.left()!=null){
             insertarNodo(padre.left(),dato);
         }
         //Si el padre es menor, se inserta a la derecha
         if(num<0 && padre.right()==null){
             padre.setRight(new BinaryTree<>(null, null, null,null));
             padre.right().setValue(dato);
-        }else if(padre.right()!=null){
+        }
+        else if(padre.right()!=null){
             //Insercion a la derecha
             insertarNodo(padre.right(),dato);
-        }**/
+        }
     }
-   
-    //Metodo que retorna las asociaciones en el arbol
+    
     public String retornarDiccionario(){
         return asociaciones.toString();
     }
@@ -119,21 +93,21 @@ public class Diccionario {
     public void imprimirArbol() {
         imprimirArbol(raiz);
     }
-   
-//    Imprimir el contenido del arbol IN-ORDER con parametros requeridos
-   private void imprimirArbol(BinaryTree<Association<String,String>> arbol) { 
+    
+    private void imprimirArbol(BinaryTree<Association<String,String>> arbol) { 
         if (arbol == null) { 
         return; 
         } 
         imprimirArbol(arbol.left); 
-        System.out.printf(arbol.value().getKey()+","); 
+        if (!texto.contains(arbol.value().getKey())){
+            texto.add(arbol.value().getKey()); 
+        }
         imprimirArbol(arbol.right); 
     }
+
    
     //LOS SIGUIENTES TRES METODOS FUNCIONAN JUNTOS PARA TRADUCIR LA ORACION
-   //Metodo que traduce la palabra
     public String traducirPalabra(BinaryTree<Association<String,String>> parent, String palabra){
-        
         String palabraTraducida = "";
         Association<String,String> asociacion = parent.value();
         String parentKey = asociacion.getKey();
@@ -158,9 +132,8 @@ public class Diccionario {
         return palabraTraducida;
     }
     
-    //Metodo que traduce la oracion ingresada
     public void traducirOracion() throws IOException{
-        
+        imprimirIn();
         leerOracion();
         String resultado ="";
         for(int i=0; i<oracion.size();i++){
@@ -169,7 +142,17 @@ public class Diccionario {
         System.out.println(resultado);
     }
     
-    //Metodo que lee el texto en el txt
+    public void imprimirIn() {
+        Collections.sort(texto);
+        for (String valor : texto) {
+            for(int i=0; i<asociaciones.size();i++){
+                if (asociaciones.get(i).getKey().equals(valor)){
+                    System.out.println("("+valor+","+asociaciones.get(i).getValue()+")");
+                }        
+            }
+        }
+    }
+    
     public void leerOracion() throws FileNotFoundException, IOException{
         
         String palabras="";
@@ -178,18 +161,16 @@ public class Diccionario {
         br = new BufferedReader(fr);
 
         String linea;
+
         while((linea=br.readLine())!=null){
              palabras=linea;
-        }    
+        }
+        palabras= palabras.replace(".","");
         while(palabras.compareTo("")!=0){
-        
 	int lugar=palabras.indexOf(' ');
-        
-        
             if(lugar!=-1){
                     oracion.add(palabras.substring(0,lugar));
                     palabras=palabras.substring(lugar+1);
-                    
             }else{
                     oracion.add(palabras);
                     palabras="";
